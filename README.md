@@ -4,6 +4,9 @@ This project is a pure **Next.js full-stack app** (App Router + API routes).
 
 ## What's upgraded
 
+
+- Added fairness improvements: deterministic RNG from `serverSeed + clientSeed + nonce`, per-spin fairness metadata, and next-seed hash commitment.
+- Added animated background coin rain for richer casino atmosphere.
 - Added a brand-new **Mogambl logo** at `public/assets/mogambl-logo.svg`.
 - Implemented real **line-based win logic** in the engine:
   - 50 paylines

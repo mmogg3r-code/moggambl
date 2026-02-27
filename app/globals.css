@@ -10,6 +10,29 @@ body {
   color: #fff;
 }
 
+
+.coin-rain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.coin-rain span {
+  position: absolute;
+  top: -10%;
+  left: var(--x);
+  font-size: clamp(1rem, 2vw, 1.6rem);
+  opacity: 0.3;
+  animation: coinFall 7s linear infinite;
+  animation-delay: var(--d);
+}
+@keyframes coinFall {
+  0% { transform: translateY(-10vh) rotate(0deg); }
+  100% { transform: translateY(120vh) rotate(360deg); }
+}
+.app > * { position: relative; z-index: 1; }
+
 .app {
   width: min(1220px, 100%);
   margin: 0 auto;

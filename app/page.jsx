@@ -24,6 +24,7 @@ export default function Page() {
   const [win, setWin] = useState(null);
   const [walletAddress, setWalletAddress] = useState('');
   const [depositEth, setDepositEth] = useState('0.01');
+  const [clientSeed, setClientSeed] = useState('player-seed-1');
 
   const selectedSlot = useMemo(() => config?.slots.find((s) => s.id === slotId), [config, slotId]);
 
@@ -106,7 +107,7 @@ export default function Page() {
     const resp = await fetch('/api/spin', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ playerId: player.id, slotId, lineBet: Number(lineBet) })
+      body: JSON.stringify({ playerId: player.id, slotId, lineBet: Number(lineBet), clientSeed })
     }).then((r) => r.json());
 
     if (resp.error) {
@@ -141,6 +142,7 @@ export default function Page() {
     <main className="app">
       <div className="coins coins-left">💰 💰 💰</div>
       <div className="coins coins-right">💰 💰 💰</div>
+      <div className="coin-rain">{Array.from({ length: 14 }).map((_, i) => <span key={i} style={{ '--d': `${(i % 7) * 0.45}s`, '--x': `${(i * 17) % 100}%` }}>🪙</span>)}</div>
 
       <Image src="/assets/mogambl-logo.svg" alt="Mogambl logo" width={760} height={180} priority className="logo" />
 
@@ -158,6 +160,7 @@ export default function Page() {
         <button onClick={connectMetaMask}>{walletAddress ? 'MetaMask Connected' : 'Connect MetaMask'}</button>
         <input type="number" min="0.001" step="0.001" value={depositEth} onChange={(e) => setDepositEth(e.target.value)} />
         <button onClick={depositWithMetaMask}>Deposit ETH</button>
+        <input type="text" value={clientSeed} onChange={(e) => setClientSeed(e.target.value)} placeholder="Client seed" />
         <button className="spin" onClick={spin} disabled={isSpinning}>{isSpinning ? 'SPINNING...' : 'SPIN 50 LINES'}</button>
         <button onClick={withdraw}>Request Withdrawal</button>
       </section>
@@ -199,6 +202,7 @@ export default function Page() {
             ))}
           </ul>
           {win.progressiveWin > 0 && <p>Progressive Hit: ${win.progressiveWin.toFixed(2)}</p>}
+          <p><small>Fairness · seed hash: {win.fairness.serverSeedHash.slice(0, 18)}... · nonce: {win.fairness.nonce}</small></p>
         </div>
       )}
 
