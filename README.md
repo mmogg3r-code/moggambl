@@ -10,16 +10,18 @@ Deposit destination:
 
 ## Deployment diagnosis and fix
 
-Your diagnosis is correct: Hostinger expected a different output directory than what was configured.
+Your latest diagnosis is correct:
+- Build completes.
+- Hostinger tries to find `.next` output.
+- This project is not Next.js, so `.next` will never exist.
 
-- Build succeeds.
-- Hostinger checks for framework output.
-- If it expects `.next`, this project will fail because it is **not Next.js**.
-- For this Vite app, output must be treated as:
+For Hostinger **Node.js app deployment**, set output directory to:
 
-`frontend/dist`
+`null`
 
-This repo is now aligned to build frontend assets into `frontend/dist`, and Express serves that directory in production.
+(Equivalent in UI: leave Output Directory empty/unset.)
+
+The app still builds frontend files to `frontend/dist`, and Express serves that folder at runtime.
 
 ---
 
@@ -39,7 +41,7 @@ npm start
 
 ---
 
-## Full Hostinger deployment guide (with corrected output directory)
+## Full Hostinger deployment guide (corrected)
 
 ### 1) Choose Node.js hosting (not static-only)
 In hPanel, use **Node.js App** hosting.
@@ -70,12 +72,14 @@ Use exactly:
   npm start
   ```
 
-### 5) Output directory setting (important)
-If Hostinger asks for output/publish/build artifact directory, set:
+### 5) Output Directory setting (critical)
+If Hostinger asks for **Output Directory / Publish Directory**, set:
 
-`frontend/dist`
+`null`
 
-Do **not** set `.next` for this project.
+Meaning: no static framework output directory is required for this Node.js app.
+
+> Do **not** use `.next`.
 
 ### 6) Startup file
 If Hostinger asks for startup file, use one of:
@@ -96,10 +100,10 @@ Set:
 5. Check logs for: `Slots backend listening on ...`
 
 ### 9) Troubleshooting if Hostinger still fails
-- Ensure framework is Node.js/Express, not Next.js preset.
-- Ensure output directory is `frontend/dist`.
-- Ensure root folder is correct.
-- Ensure startup file points to real file.
+- Ensure framework preset is Node.js/Express, not Next.js.
+- Ensure output directory is `null` (blank/unset).
+- Ensure app root is the repo root.
+- Ensure startup file points to a real file.
 - Ensure build command is `npm run build`.
 
 ---
