@@ -31,7 +31,7 @@ body {
   0% { transform: translateY(-10vh) rotate(0deg); }
   100% { transform: translateY(120vh) rotate(360deg); }
 }
-.app > * { position: relative; z-index: 1; }
+.app > :not(.coin-rain) { position: relative; z-index: 1; }
 
 .app {
   width: min(1220px, 100%);
@@ -277,4 +277,8 @@ h1 {
   background: linear-gradient(45deg,#00d2ff,#3a7bff);
   color: #051135;
   box-shadow: 0 0 16px #76e3ff;
+}
+
+@media (min-width: 1200px) {
+  .coin-rain span { opacity: 0.22; }
 }

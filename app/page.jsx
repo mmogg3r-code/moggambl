@@ -194,7 +194,7 @@ export default function Page() {
     <main className="app">
       <div className="coins coins-left">💰 💰 💰</div>
       <div className="coins coins-right">💰 💰 💰</div>
-      <div className="coin-rain">{Array.from({ length: 14 }).map((_, i) => <span key={i} style={{ '--d': `${(i % 7) * 0.45}s`, '--x': `${(i * 17) % 100}%` }}>🪙</span>)}</div>
+      <div className="coin-rain">{Array.from({ length: 10 }).map((_, i) => <span key={i} style={{ '--d': `${(i % 5) * 0.5}s`, '--x': `${(i * 19) % 100}%` }}>🪙</span>)}</div>
 
       <Image src="/assets/mogambl-logo.svg" alt="Mogambl logo" width={760} height={180} priority className="logo" />
 
@@ -206,7 +206,7 @@ export default function Page() {
 
       <section className="controls">
         <select value={slotId} onChange={(e) => setSlotId(e.target.value)}>
-          {config.slots.map((slot) => <option key={slot.id} value={slot.id}>{slot.name}</option>)}
+          {(config.slots || []).map((slot) => <option key={slot.id} value={slot.id}>{slot.name}</option>)}
         </select>
         <input type="number" min="0.01" max={config.maxBetPerLine} step="0.1" value={lineBet} onChange={(e) => setLineBet(e.target.value)} />
         <button onClick={connectMetaMask}>{walletAddress ? 'MetaMask Connected' : 'Connect MetaMask'}</button>
@@ -245,7 +245,7 @@ export default function Page() {
       <aside className="cabinet-info">
         <p><b>Slot:</b> {selectedSlot?.name}</p>
         <p><b>Volatility:</b> {selectedSlot?.volatility}x</p>
-        <p><b>Progressive:</b> ${selectedSlot?.jackpotPool.toFixed(2)}</p>
+        <p><b>Progressive:</b> ${(selectedSlot?.jackpotPool ?? 0).toFixed(2)}</p>
         <p><b>Top Multiplier:</b> {config.maxMultiplier}x</p>
         <p><b>Deposit Address:</b> <code>{config.depositAddress}</code></p>
       </aside>
@@ -274,7 +274,7 @@ export default function Page() {
 
       <p className="message">{message}</p>
       <section className="slot-grid-list">
-        {config.slots.map((s) => (
+        {(config.slots || []).map((s) => (
           <article key={s.id} className={`slot-card ${s.id === slotId ? 'active' : ''}`} onClick={() => setSlotId(s.id)}>
             <h4>{s.name}</h4>
             <span>${s.jackpotPool.toFixed(0)}</span>
