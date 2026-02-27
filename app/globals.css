@@ -272,3 +272,9 @@ h1 {
   font-size: 1.1rem;
   font-weight: 800;
 }
+
+.turbo.active {
+  background: linear-gradient(45deg,#00d2ff,#3a7bff);
+  color: #051135;
+  box-shadow: 0 0 16px #76e3ff;
+}

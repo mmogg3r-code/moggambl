@@ -30,6 +30,10 @@ export default function Page() {
   const [walletAddress, setWalletAddress] = useState('');
   const [depositEth, setDepositEth] = useState('0.01');
   const [clientSeed, setClientSeed] = useState('player-seed-1');
+  const [turboSpin, setTurboSpin] = useState(false);
+  const [autoSpinOn, setAutoSpinOn] = useState(false);
+  const [autoSpinCount, setAutoSpinCount] = useState(10);
+  const [autoSpinsLeft, setAutoSpinsLeft] = useState(0);
 
   const selectedSlot = useMemo(() => config?.slots.find((s) => s.id === slotId), [config, slotId]);
 
@@ -48,6 +52,22 @@ export default function Page() {
       setPlayer(playerResp);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!autoSpinOn || isSpinning || autoSpinsLeft <= 0) return;
+    const timer = setTimeout(async () => {
+      const ok = await spinOnce();
+      setAutoSpinsLeft((left) => {
+        const next = left - 1;
+        if (next <= 0 || !ok) {
+          setAutoSpinOn(false);
+          return 0;
+        }
+        return next;
+      });
+    }, turboSpin ? 80 : 350);
+    return () => clearTimeout(timer);
+  }, [autoSpinOn, autoSpinsLeft, isSpinning, turboSpin]);
 
   const pingSound = (hz = 440, duration = 0.1) => {
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -100,13 +120,18 @@ export default function Page() {
     }
   };
 
-  const spin = async () => {
+  const spinOnce = async () => {
+    if (!player) return false;
     setSpinning(true);
     setWin(null);
-    for (let i = 0; i < 10; i += 1) {
+
+    const loopCount = turboSpin ? 4 : 10;
+    const loopDelay = turboSpin ? 20 : 75;
+
+    for (let i = 0; i < loopCount; i += 1) {
       setGrid(Array.from({ length: 3 }, () => Array.from({ length: 5 }, () => Object.keys(slotIcons)[Math.floor(Math.random() * 10)])));
-      pingSound(320 + (i * 30), 0.05);
-      await new Promise((r) => setTimeout(r, 75));
+      pingSound(320 + (i * 30), turboSpin ? 0.03 : 0.05);
+      await new Promise((r) => setTimeout(r, loopDelay));
     }
 
     const resp = await fetch('/api/spin', {
@@ -118,7 +143,7 @@ export default function Page() {
     if (resp.error) {
       setMessage(resp.error);
       setSpinning(false);
-      return;
+      return false;
     }
 
     setGrid(resp.spin.grid);
@@ -128,6 +153,28 @@ export default function Page() {
     setMessage(resp.spin.totalWin > 0 ? `WIN $${resp.spin.totalWin.toFixed(2)} (${resp.spin.winningLines.length} line hits)` : 'No win this spin');
     if (resp.spin.totalWin > 0) pingSound(880, 0.3);
     setSpinning(false);
+    return true;
+  };
+
+  const spin = async () => {
+    await spinOnce();
+  };
+
+  const startAutoSpin = () => {
+    const count = Number(autoSpinCount);
+    if (!Number.isFinite(count) || count <= 0) {
+      setMessage('Auto spin count must be greater than 0');
+      return;
+    }
+    setAutoSpinsLeft(count);
+    setAutoSpinOn(true);
+    setMessage(`Auto spin started (${count} spins)`);
+  };
+
+  const stopAutoSpin = () => {
+    setAutoSpinOn(false);
+    setAutoSpinsLeft(0);
+    setMessage('Auto spin stopped');
   };
 
   const withdraw = async () => {
@@ -166,9 +213,15 @@ export default function Page() {
         <input type="number" min="0.001" step="0.001" value={depositEth} onChange={(e) => setDepositEth(e.target.value)} />
         <button onClick={depositWithMetaMask}>Deposit ETH</button>
         <input type="text" value={clientSeed} onChange={(e) => setClientSeed(e.target.value)} placeholder="Client seed" />
-        <button className="spin" onClick={spin} disabled={isSpinning}>{isSpinning ? 'SPINNING...' : 'SPIN 50 LINES'}</button>
+        <button className="spin" onClick={spin} disabled={isSpinning || autoSpinOn}>{isSpinning ? 'SPINNING...' : 'SPIN 50 LINES'}</button>
+        <button className={`turbo ${turboSpin ? 'active' : ''}`} onClick={() => setTurboSpin((v) => !v)}>{turboSpin ? 'TURBO ON' : 'TURBO OFF'}</button>
+        <input type="number" min="1" max="1000" value={autoSpinCount} onChange={(e) => setAutoSpinCount(e.target.value)} placeholder="Auto spins" />
+        <button onClick={startAutoSpin} disabled={autoSpinOn || isSpinning}>START AUTO</button>
+        <button onClick={stopAutoSpin} disabled={!autoSpinOn}>STOP AUTO</button>
         <button onClick={withdraw}>Request Withdrawal</button>
       </section>
+
+      {autoSpinOn && <p className="message">Auto spinning... {autoSpinsLeft} left</p>}
 
       <section className="machine">
         <div className="jackpot-strip">

@@ -13,6 +13,7 @@ This project is a pure **Next.js full-stack app** (App Router + API routes).
   - per-line symbol match evaluation
   - per-line payout amounts returned as `winningLines`
 - Frontend now draws **animated payline overlays** on winning spins and shows a **line-by-line payout list** in the win popup.
+- Added **Turbo Spin** and **Auto Spin** controls for faster and repeated spins.
 
 
 ## UI improvements
