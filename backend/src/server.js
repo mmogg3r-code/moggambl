@@ -185,7 +185,7 @@ app.post('/api/withdraw', (req, res) => {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..');
-const staticDir = resolve(repoRoot, 'backend', 'public');
+const staticDir = resolve(repoRoot, 'frontend', 'dist');
 if (existsSync(staticDir)) {
   app.use(express.static(staticDir));
   app.get('*', (_req, res) => res.sendFile(resolve(staticDir, 'index.html')));

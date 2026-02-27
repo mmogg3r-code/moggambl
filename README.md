@@ -8,14 +8,18 @@ Full-stack slots simulator:
 Deposit destination:
 `0x9dCc878e6BfAdAd7BA47ae55Bee452870aA2DD89`
 
-## What was fixed for Hostinger deployment
+## Deployment diagnosis and fix
 
-If Hostinger reports **"Unsupported framework or invalid project structure"**, this repo now includes:
-- a single root `package.json` with valid `build` + `start` scripts,
-- root `server.js` and `app.js` entrypoints (for panels that require default entry names),
-- React dependencies in root install scope,
-- production build output to `backend/public`,
-- Express static serving fallback for SPA routes.
+Your diagnosis is correct: Hostinger expected a different output directory than what was configured.
+
+- Build succeeds.
+- Hostinger checks for framework output.
+- If it expects `.next`, this project will fail because it is **not Next.js**.
+- For this Vite app, output must be treated as:
+
+`frontend/dist`
+
+This repo is now aligned to build frontend assets into `frontend/dist`, and Express serves that directory in production.
 
 ---
 
@@ -35,75 +39,71 @@ npm start
 
 ---
 
-## Full Hostinger deployment guide (Git deployment or upload)
+## Full Hostinger deployment guide (with corrected output directory)
 
-### 1) Choose the correct hosting type
-Use **Node.js hosting** (not static website-only hosting). If your plan has no Node.js app manager, use a VPS.
+### 1) Choose Node.js hosting (not static-only)
+In hPanel, use **Node.js App** hosting.
 
-### 2) Project root in Hostinger
-Ensure Hostinger points to the folder containing:
+### 2) App root
+Point Hostinger to the repo root that contains:
 - `package.json`
 - `backend/`
 - `frontend/`
-- `server.js` and `app.js`
+- `server.js` / `app.js`
 
-### 3) Set Node version
-Use Node **18, 20, 22, or 24** (20+ recommended).
+### 3) Node version
+Use Node **18+** (20/22 recommended).
 
-### 4) Build/install/start settings in hPanel
-Use these exact commands:
+### 4) Set commands
+Use exactly:
 
-- **Install command**
+- Install:
   ```bash
   npm install
   ```
-- **Build command**
+- Build:
   ```bash
   npm run build
   ```
-- **Start command**
+- Start:
   ```bash
   npm start
   ```
 
-If Hostinger asks for startup file instead of command, set one of:
-- `server.js` (preferred)
-- `app.js` (fallback)
-- `backend/src/server.js` (direct)
+### 5) Output directory setting (important)
+If Hostinger asks for output/publish/build artifact directory, set:
 
-### 5) Environment variables
+`frontend/dist`
+
+Do **not** set `.next` for this project.
+
+### 6) Startup file
+If Hostinger asks for startup file, use one of:
+- `server.js` (preferred)
+- `app.js`
+- `backend/src/server.js`
+
+### 7) Environment variables
 Set:
 - `NODE_ENV=production`
-- `PORT` only if Hostinger requires explicit port (otherwise let platform inject it)
+- `PORT` only if Hostinger requires explicit value.
 
-### 6) Redeploy sequence (important)
-After changing settings:
+### 8) Redeploy sequence
 1. Stop app
-2. Clear previous build artifacts (optional)
-3. Run install
-4. Run build
-5. Start app
-6. Check logs
+2. Run `npm install`
+3. Run `npm run build`
+4. Start app (`npm start`)
+5. Check logs for: `Slots backend listening on ...`
 
-You should see: `Slots backend listening on ...`
-
-### 7) If it still says unsupported framework
-Usually one of these is wrong:
-- wrong app root directory selected,
-- Node.js app not enabled for the site,
-- install/build/start commands missing,
-- startup file points to non-existent path,
-- deployment done under static hosting mode.
-
-### 8) MetaMask usage after deploy
-1. Open your domain in a browser with MetaMask.
-2. Click **Connect MetaMask**.
-3. Enter deposit amount and click **Deposit with MetaMask**.
-4. Confirm transaction to deposit address in MetaMask.
+### 9) Troubleshooting if Hostinger still fails
+- Ensure framework is Node.js/Express, not Next.js preset.
+- Ensure output directory is `frontend/dist`.
+- Ensure root folder is correct.
+- Ensure startup file points to real file.
+- Ensure build command is `npm run build`.
 
 ---
 
 ## Security note
-
 Current deposit crediting trusts the client-provided tx hash and amount for demo purposes.
 For real-money production, implement server-side on-chain receipt verification (RPC, `to`, `value`, confirmations).

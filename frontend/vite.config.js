@@ -11,7 +11,7 @@ export default defineConfig({
   root: __dirname,
   server: { port: 5173 },
   build: {
-    outDir: resolve(repoRoot, 'backend', 'public'),
+    outDir: resolve(repoRoot, 'frontend', 'dist'),
     emptyOutDir: true
   }
 });
