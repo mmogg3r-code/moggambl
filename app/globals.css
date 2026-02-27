@@ -1,6 +1,7 @@
 :root { color-scheme: dark; }
 body { margin: 0; font-family: Inter, system-ui, sans-serif; background: radial-gradient(circle at top,#293b79,#080d1b 60%); color: #fff; }
 .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+.logo { display:block; margin: 0 auto 8px; }
 h1 { text-align: center; text-shadow: 0 0 18px #5bf; }
 .legal { text-align: center; color: #9fc6ff; }
 .stats,.controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 12px 0; }

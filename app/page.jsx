@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 
 const slotIcons = {
@@ -135,6 +136,7 @@ export default function Page() {
 
   return (
     <main className="app">
+      <Image src="/assets/moggambl-logo.svg" alt="MogGambl logo" width={320} height={96} priority className="logo" />
       <h1>MogGambl • Next.js Mega Floor</h1>
       <p className="legal">Deposit ETH to <code>{config.depositAddress}</code></p>
 
