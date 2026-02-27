@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 
 const slotIcons = {
-  '7': '⑦', BAR: '🟥', '🍒': '🍒', '💎': '💎', '👑': '👑',
+  '7': '7️⃣', BAR: '🟥', '🍒': '🍒', '💎': '💎', '👑': '👑',
   '⚡': '⚡', '🐉': '🐉', '🌙': '🌙', '🔔': '🔔', '⭐': '⭐'
 };
 
@@ -136,9 +136,11 @@ export default function Page() {
 
   return (
     <main className="app">
+      <div className="coins coins-left">💰 💰 💰</div>
+      <div className="coins coins-right">💰 💰 💰</div>
+
       <Image src="/assets/moggambl-logo.svg" alt="MogGambl logo" width={320} height={96} priority className="logo" />
-      <h1>MogGambl • Next.js Mega Floor</h1>
-      <p className="legal">Deposit ETH to <code>{config.depositAddress}</code></p>
+      <h1>MogGambl • True Casino Experience</h1>
 
       <section className="stats">
         <div><strong>Balance:</strong> ${player.balanceUSD.toFixed(2)}</div>
@@ -159,20 +161,25 @@ export default function Page() {
       </section>
 
       <section className="machine">
+        <div className="jackpot-strip">
+          {grid[0].map((cell, idx) => <span key={`strip-${idx}`}>{slotIcons[cell]} {Math.floor(Math.random() * 900000000)}</span>)}
+        </div>
         <div className="reels">
           {grid.map((row, ri) => row.map((cell, ci) => <div key={`${ri}-${ci}`} className={`symbol ${isSpinning ? 'blur' : ''}`}>{slotIcons[cell]}</div>))}
         </div>
-        <aside>
-          <h2>{selectedSlot?.name}</h2>
-          <p>Volatility: {selectedSlot?.volatility}x</p>
-          <p>Progressive: ${selectedSlot?.jackpotPool.toFixed(2)}</p>
-          <p>Max Multiplier: {config.maxMultiplier}x</p>
-        </aside>
       </section>
+
+      <aside className="cabinet-info">
+        <p><b>Slot:</b> {selectedSlot?.name}</p>
+        <p><b>Volatility:</b> {selectedSlot?.volatility}x</p>
+        <p><b>Progressive:</b> ${selectedSlot?.jackpotPool.toFixed(2)}</p>
+        <p><b>Top Multiplier:</b> {config.maxMultiplier}x</p>
+        <p><b>Deposit Address:</b> <code>{config.depositAddress}</code></p>
+      </aside>
 
       {win?.totalWin > 0 && (
         <div className="win-popup">
-          <h3>🎉 Jackpot Energy!</h3>
+          <h3>🎉 Big Win!</h3>
           <p>{win.multiplier}x | ${win.totalWin.toFixed(2)}</p>
           {win.progressiveWin > 0 && <p>Progressive Hit: ${win.progressiveWin.toFixed(2)}</p>}
         </div>
