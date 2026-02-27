@@ -18,6 +18,8 @@ This project is a pure **Next.js full-stack app** (App Router + API routes).
 
 ## UI improvements
 
+- Added resilient startup fallback so UI renders even if API init fails/hangs on desktop environments.
+- Added safer spin/withdraw error handling to prevent client crashes from network/API failures.
 - Fixed blank-page risk by removing non-deterministic render values (hydration-safe jackpot counters).
 - Mobile-first responsive layout for controls, reels, jackpot strip, and slot cards.
 - Improved neon casino aesthetics with better spacing, typography scaling, and glow effects.

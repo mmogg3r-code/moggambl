@@ -171,38 +171,43 @@ export default function Page() {
 
   const spinOnce = async () => {
     if (!player) return false;
-    setSpinning(true);
-    setWin(null);
+    try {
+      setSpinning(true);
+      setWin(null);
 
-    const loopCount = turboSpin ? 4 : 10;
-    const loopDelay = turboSpin ? 20 : 75;
+      const loopCount = turboSpin ? 4 : 10;
+      const loopDelay = turboSpin ? 20 : 75;
 
-    for (let i = 0; i < loopCount; i += 1) {
-      setGrid(Array.from({ length: 3 }, () => Array.from({ length: 5 }, () => Object.keys(slotIcons)[Math.floor(Math.random() * 10)])));
-      pingSound(320 + (i * 30), turboSpin ? 0.03 : 0.05);
-      await new Promise((r) => setTimeout(r, loopDelay));
-    }
+      for (let i = 0; i < loopCount; i += 1) {
+        setGrid(Array.from({ length: 3 }, () => Array.from({ length: 5 }, () => Object.keys(slotIcons)[Math.floor(Math.random() * 10)])));
+        pingSound(320 + (i * 30), turboSpin ? 0.03 : 0.05);
+        await new Promise((r) => setTimeout(r, loopDelay));
+      }
 
-    const resp = await fetch('/api/spin', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ playerId: player.id, slotId, lineBet: Number(lineBet), clientSeed })
-    }).then((r) => r.json());
+      const resp = await fetch('/api/spin', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ playerId: player.id, slotId, lineBet: Number(lineBet), clientSeed })
+      }).then((r) => r.json());
 
-    if (resp.error) {
-      setMessage(resp.error);
-      setSpinning(false);
+      if (resp.error) {
+        setMessage(resp.error);
+        return false;
+      }
+
+      setGrid(resp.spin.grid);
+      setPlayer(resp.player);
+      setConfig((old) => ({ ...old, slots: (old?.slots || []).map((s) => (s.id === slotId ? { ...s, jackpotPool: resp.spin.jackpotPool } : s)) }));
+      setWin(resp.spin);
+      setMessage(resp.spin.totalWin > 0 ? `WIN $${resp.spin.totalWin.toFixed(2)} (${resp.spin.winningLines.length} line hits)` : 'No win this spin');
+      if (resp.spin.totalWin > 0) pingSound(880, 0.3);
+      return true;
+    } catch (error) {
+      setMessage(error?.message || 'Spin failed. Please try again.');
       return false;
+    } finally {
+      setSpinning(false);
     }
-
-    setGrid(resp.spin.grid);
-    setPlayer(resp.player);
-    setConfig((old) => ({ ...old, slots: old.slots.map((s) => (s.id === slotId ? { ...s, jackpotPool: resp.spin.jackpotPool } : s)) }));
-    setWin(resp.spin);
-    setMessage(resp.spin.totalWin > 0 ? `WIN $${resp.spin.totalWin.toFixed(2)} (${resp.spin.winningLines.length} line hits)` : 'No win this spin');
-    if (resp.spin.totalWin > 0) pingSound(880, 0.3);
-    setSpinning(false);
-    return true;
   };
 
   const spin = async () => {
@@ -227,14 +232,18 @@ export default function Page() {
   };
 
   const withdraw = async () => {
-    const resp = await fetch('/api/withdraw', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ playerId: player.id, amountUSD: Math.min(100, player.balanceUSD), walletAddress: walletAddress || '0xYourWallet' })
-    }).then((r) => r.json());
+    try {
+      const resp = await fetch('/api/withdraw', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ playerId: player.id, amountUSD: Math.min(100, player.balanceUSD), walletAddress: walletAddress || '0xYourWallet' })
+      }).then((r) => r.json());
 
-    setMessage(resp.error || resp.message);
-    if (resp.player) setPlayer(resp.player);
+      setMessage(resp.error || resp.message);
+      if (resp.player) setPlayer(resp.player);
+    } catch (error) {
+      setMessage(error?.message || 'Withdraw request failed');
+    }
   };
 
   return (
