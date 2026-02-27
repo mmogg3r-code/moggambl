@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore, getPlayer, deposit, spin, withdraw } from '../lib/engine.js';
 
-test('deposit and spin update balances', () => {
+test('deposit and spin update balances + return line wins structure', () => {
   const store = createStore();
   const player = getPlayer(store, 'p1');
   deposit(store, { playerId: player.id, txHash: '0xabc', amountEth: 1, walletAddress: '0xwallet', ethUsd: 1000 });
   assert.equal(player.balanceUSD, 1000);
   const result = spin(store, { playerId: player.id, slotId: 'slot-1', lineBet: 1 });
   assert.ok(result.player.totalWageredUSD >= 50);
+  assert.ok(Array.isArray(result.spin.winningLines));
 });
 
 test('withdraw requires 20x wagering', () => {

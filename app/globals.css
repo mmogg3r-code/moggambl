@@ -13,7 +13,7 @@ body {
 .coins-left { left: -10px; }
 .coins-right { right: -10px; }
 @keyframes float { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-8px);} }
-.logo { display:block; margin: 0 auto 6px; filter: drop-shadow(0 0 16px #ffcf40); }
+.logo { display:block; margin: 0 auto 6px; filter: drop-shadow(0 0 16px #ffcf40); width: min(96%,760px); height: auto; }
 h1 {
   text-align: center;
   text-transform: uppercase;
@@ -61,6 +61,24 @@ button { cursor: pointer; font-weight: 700; }
   padding: 6px 4px;
 }
 .reels { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+
+.reels-wrap { position: relative; width: 532px; margin: 0 auto; }
+.line-overlay { position: absolute; left: 0; top: 0; pointer-events: none; }
+.payline {
+  fill: none;
+  stroke: #f8ff6a;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px #ff5);
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawLine 0.7s ease forwards;
+}
+@keyframes drawLine { to { stroke-dashoffset: 0; } }
+.win-popup ul { text-align: left; margin: 8px 0 0; padding-left: 18px; }
+.win-popup li { font-weight: 700; }
+
 .symbol {
   height: 112px;
   display: grid;

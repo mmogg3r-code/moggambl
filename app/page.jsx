@@ -9,6 +9,9 @@ const slotIcons = {
 };
 
 const initialGrid = Array.from({ length: 3 }, () => Array.from({ length: 5 }, () => '⭐'));
+const cellW = 100;
+const cellH = 112;
+const gap = 8;
 
 export default function Page() {
   const [config, setConfig] = useState(null);
@@ -116,7 +119,7 @@ export default function Page() {
     setPlayer(resp.player);
     setConfig((old) => ({ ...old, slots: old.slots.map((s) => (s.id === slotId ? { ...s, jackpotPool: resp.spin.jackpotPool } : s)) }));
     setWin(resp.spin);
-    setMessage(resp.spin.totalWin > 0 ? `WIN $${resp.spin.totalWin.toFixed(2)} (${resp.spin.multiplier}x)` : 'No win this spin');
+    setMessage(resp.spin.totalWin > 0 ? `WIN $${resp.spin.totalWin.toFixed(2)} (${resp.spin.winningLines.length} line hits)` : 'No win this spin');
     if (resp.spin.totalWin > 0) pingSound(880, 0.3);
     setSpinning(false);
   };
@@ -139,8 +142,7 @@ export default function Page() {
       <div className="coins coins-left">💰 💰 💰</div>
       <div className="coins coins-right">💰 💰 💰</div>
 
-      <Image src="/assets/moggambl-logo.svg" alt="MogGambl logo" width={320} height={96} priority className="logo" />
-      <h1>MogGambl • True Casino Experience</h1>
+      <Image src="/assets/mogambl-logo.svg" alt="Mogambl logo" width={760} height={180} priority className="logo" />
 
       <section className="stats">
         <div><strong>Balance:</strong> ${player.balanceUSD.toFixed(2)}</div>
@@ -164,8 +166,18 @@ export default function Page() {
         <div className="jackpot-strip">
           {grid[0].map((cell, idx) => <span key={`strip-${idx}`}>{slotIcons[cell]} {Math.floor(Math.random() * 900000000)}</span>)}
         </div>
-        <div className="reels">
-          {grid.map((row, ri) => row.map((cell, ci) => <div key={`${ri}-${ci}`} className={`symbol ${isSpinning ? 'blur' : ''}`}>{slotIcons[cell]}</div>))}
+        <div className="reels-wrap">
+          <div className="reels">
+            {grid.map((row, ri) => row.map((cell, ci) => <div key={`${ri}-${ci}`} className={`symbol ${isSpinning ? 'blur' : ''}`}>{slotIcons[cell]}</div>))}
+          </div>
+          {!!win?.winningLines?.length && (
+            <svg className="line-overlay" width={532} height={352} viewBox="0 0 532 352">
+              {win.winningLines.slice(0, 8).map((line, i) => {
+                const pts = line.positions.map((p) => `${p.col * (cellW + gap) + (cellW / 2)},${p.row * (cellH + gap) + (cellH / 2)}`).join(' ');
+                return <polyline key={line.lineIndex} points={pts} className="payline" style={{ animationDelay: `${i * 0.08}s` }} />;
+              })}
+            </svg>
+          )}
         </div>
       </section>
 
@@ -180,7 +192,12 @@ export default function Page() {
       {win?.totalWin > 0 && (
         <div className="win-popup">
           <h3>🎉 Big Win!</h3>
-          <p>{win.multiplier}x | ${win.totalWin.toFixed(2)}</p>
+          <p>Total: ${win.totalWin.toFixed(2)} | Base Win: ${win.payoutUSD.toFixed(2)}</p>
+          <ul>
+            {win.winningLines.slice(0, 6).map((line) => (
+              <li key={`line-${line.lineIndex}`}>Line {line.lineIndex + 1}: {line.symbol} x{line.count} = ${line.amount.toFixed(2)}</li>
+            ))}
+          </ul>
           {win.progressiveWin > 0 && <p>Progressive Hit: ${win.progressiveWin.toFixed(2)}</p>}
         </div>
       )}
