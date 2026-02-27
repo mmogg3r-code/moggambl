@@ -1,25 +1,26 @@
 # MogGambl Next.js (Deployment-Fixed)
 
-This project is now a **pure Next.js full-stack app** (App Router + API routes).
+This project is a pure **Next.js full-stack app** (App Router + API routes).
 
-## What was fixed for deployment failure
+## Root cause of your current failure
 
-Your last deployment failed because the repo still contained mixed legacy Express/Vite artifacts and startup shims pointing at old backend files.
-That can break Hostinger detection/startup depending on which entrypoint it picks.
+Your log shows Next build finishing successfully, then Hostinger reports:
 
-### Fixes applied
-- Removed legacy `backend/` and `frontend/` folders from runtime path.
-- Kept a single Next.js architecture (`app/`, `app/api/`, `lib/`).
-- Replaced root startup entrypoints with a real Next HTTP server (`server.js`) and `app.js` shim.
-- Updated `npm start` to run `node server.js` for consistent startup behavior in Hostinger.
+`ERROR: No output directory found after build`
 
-## Stack
-- Next.js 14 App Router
-- API routes: `/api/config`, `/api/player`, `/api/deposit`, `/api/spin`, `/api/withdraw`
-- Shared game engine: `lib/engine.js`
+That usually means Hostinger is checking for the wrong artifact path. With Next.js default build, the output directory is:
 
-Deposit address:
-`0x9dCc878e6BfAdAd7BA47ae55Bee452870aA2DD89`
+`.next`
+
+The previous config used a custom `distDir`, which can conflict with platform expectations.
+
+## Fix applied in code
+
+- Removed custom `distDir` override from `next.config.mjs`.
+- Switched runtime start command back to standard Next startup:
+  - `next start -p $PORT`
+
+This ensures build output is generated in `.next`, which most Next-compatible hosts detect automatically.
 
 ## Local
 ```bash
@@ -34,20 +35,21 @@ npm run build
 npm start
 ```
 
-## Hostinger redeploy steps (important)
-1. Re-upload/pull latest code.
-2. In Node.js app settings use:
+## Hostinger redeploy steps
+
+1. Pull/upload latest code.
+2. Configure commands:
    - Install: `npm install`
    - Build: `npm run build`
    - Start: `npm start`
-3. Startup file (if required): `server.js`.
-4. Output directory for Next.js build artifacts: `dist` (because `distDir` is configured).
-5. Environment:
+3. Output Directory setting:
+   - Use `.next` **or leave empty if Hostinger auto-detects Next.js**.
+4. Environment:
    - `NODE_ENV=production`
-   - `PORT` managed by Hostinger (or set explicitly if needed).
-6. Redeploy and restart app.
+   - `PORT` from Hostinger (or set one if required)
+5. Clear previous build cache/artifacts and redeploy.
 
-If build still fails, clear previous build cache/artifacts in Hostinger and redeploy from clean state.
+If Hostinger asks for a startup file instead of command, prefer command mode. If forced, use Next binary startup from npm scripts rather than custom server entry.
 
 ## Security note
 Deposit crediting is demo-oriented and currently trusts client-submitted tx hashes.
