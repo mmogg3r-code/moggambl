@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
-const API = 'http://localhost:3001/api';
+const API = '/api';
+const DEPOSIT_ETH_DEFAULT = '0.01';
 
 const slotIcons = {
   '7': '⑦', BAR: '🟥', '🍒': '🍒', '💎': '💎', '👑': '👑',
@@ -18,6 +19,8 @@ export default function App() {
   const [message, setMessage] = useState('Welcome to MogGambl');
   const [isSpinning, setSpinning] = useState(false);
   const [win, setWin] = useState(null);
+  const [walletAddress, setWalletAddress] = useState('');
+  const [depositEth, setDepositEth] = useState(DEPOSIT_ETH_DEFAULT);
 
   const selectedSlot = useMemo(() => config?.slots.find((s) => s.id === slotId), [config, slotId]);
 
@@ -31,37 +34,91 @@ export default function App() {
         body: JSON.stringify({ playerId: saved || undefined })
       }).then((r) => r.json());
       localStorage.setItem('moggambl-player-id', playerResp.id);
+      if (playerResp.walletAddress) setWalletAddress(playerResp.walletAddress);
       setPlayer(playerResp);
     })();
   }, []);
 
   const pingSound = (hz = 440, duration = 0.1) => {
-    const c = new (window.AudioContext || window.webkitAudioContext)();
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const c = new Ctx();
     const o = c.createOscillator();
     const g = c.createGain();
-    o.connect(g); g.connect(c.destination);
-    o.frequency.value = hz; o.type = 'triangle';
+    o.connect(g);
+    g.connect(c.destination);
+    o.frequency.value = hz;
+    o.type = 'triangle';
     g.gain.value = 0.03;
-    o.start(); o.stop(c.currentTime + duration);
+    o.start();
+    o.stop(c.currentTime + duration);
   };
 
-  const depositDemo = async () => {
-    const txHash = `demo-${Date.now()}`;
-    const updated = await fetch(`${API}/deposit`, {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ playerId: player.id, txHash, amountEth: 0.05 })
-    }).then((r) => r.json());
-    setPlayer(updated);
-    setMessage('Deposit recorded. In production, detect on-chain transfer before credit.');
-    pingSound(520, 0.16);
+  const connectMetaMask = async () => {
+    if (!window.ethereum) {
+      setMessage('MetaMask not detected. Install extension first.');
+      return;
+    }
+    try {
+      const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      setWalletAddress(address);
+      const updated = await fetch(`${API}/player`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ playerId: player.id, walletAddress: address })
+      }).then((r) => r.json());
+      setPlayer(updated);
+      setMessage(`Wallet connected: ${address.slice(0, 6)}...${address.slice(-4)}`);
+    } catch {
+      setMessage('MetaMask connection rejected.');
+    }
+  };
+
+  const depositWithMetaMask = async () => {
+    if (!window.ethereum) {
+      setMessage('MetaMask not detected.');
+      return;
+    }
+    if (!walletAddress) {
+      setMessage('Connect wallet first.');
+      return;
+    }
+    try {
+      const weiHex = `0x${BigInt(Math.floor(Number(depositEth) * 1e18)).toString(16)}`;
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [{ from: walletAddress, to: config.depositAddress, value: weiHex }]
+      });
+
+      const updated = await fetch(`${API}/deposit`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          playerId: player.id,
+          txHash,
+          amountEth: Number(depositEth),
+          walletAddress
+        })
+      }).then((r) => r.json());
+
+      if (updated.error) {
+        setMessage(updated.error);
+        return;
+      }
+      setPlayer(updated);
+      setMessage(`Deposit confirmed: ${depositEth} ETH`);
+      pingSound(540, 0.15);
+    } catch {
+      setMessage('Deposit transaction rejected or failed.');
+    }
   };
 
   const spin = async () => {
     setSpinning(true);
     setWin(null);
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 8; i += 1) {
       setGrid(Array.from({ length: 3 }, () => Array.from({ length: 5 }, () => Object.keys(slotIcons)[Math.floor(Math.random() * 10)])));
-      pingSound(300 + i * 40, 0.05);
+      pingSound(300 + (i * 40), 0.05);
       await new Promise((r) => setTimeout(r, 90));
     }
     const resp = await fetch(`${API}/spin`, {
@@ -77,7 +134,7 @@ export default function App() {
 
     setGrid(resp.spin.grid);
     setPlayer(resp.player);
-    setConfig((old) => ({ ...old, slots: old.slots.map((s) => s.id === slotId ? { ...s, jackpotPool: resp.spin.jackpotPool } : s) }));
+    setConfig((old) => ({ ...old, slots: old.slots.map((s) => (s.id === slotId ? { ...s, jackpotPool: resp.spin.jackpotPool } : s)) }));
     setWin(resp.spin);
     setMessage(resp.spin.totalWin > 0 ? `WIN ${resp.spin.totalWin.toFixed(2)} USD` : 'No win this spin');
     if (resp.spin.totalWin > 0) pingSound(840, 0.35);
@@ -87,7 +144,7 @@ export default function App() {
   const withdraw = async () => {
     const resp = await fetch(`${API}/withdraw`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ playerId: player.id, amountUSD: Math.min(50, player.balanceUSD), walletAddress: '0xYourWallet' })
+      body: JSON.stringify({ playerId: player.id, amountUSD: Math.min(50, player.balanceUSD), walletAddress: walletAddress || '0xYourWallet' })
     }).then((r) => r.json());
     setMessage(resp.error || resp.message);
     if (resp.player) setPlayer(resp.player);
@@ -112,7 +169,11 @@ export default function App() {
         <label>Line Bet (max {config.maxBetPerLine})
           <input type="number" min="0.01" step="0.1" max={config.maxBetPerLine} value={lineBet} onChange={(e) => setLineBet(e.target.value)} />
         </label>
-        <button onClick={depositDemo}>Record Demo Deposit</button>
+        <button onClick={connectMetaMask}>{walletAddress ? 'Wallet Connected' : 'Connect MetaMask'}</button>
+        <label>Deposit ETH
+          <input type="number" min="0.001" step="0.001" value={depositEth} onChange={(e) => setDepositEth(e.target.value)} />
+        </label>
+        <button onClick={depositWithMetaMask}>Deposit with MetaMask</button>
         <button className="spin" disabled={isSpinning} onClick={spin}>{isSpinning ? 'Spinning…' : 'SPIN 50 LINES'}</button>
         <button onClick={withdraw}>Request Withdrawal</button>
       </div>
@@ -128,6 +189,7 @@ export default function App() {
           <p>Volatility: {selectedSlot?.volatility}x</p>
           <p>Progressive Jackpot: <b>${selectedSlot?.jackpotPool.toFixed(2)}</b></p>
           <p>Top Multiplier: {config.maxMultiplier}x</p>
+          <p>Wallet: {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 'Not connected'}</p>
         </aside>
       </div>
 
