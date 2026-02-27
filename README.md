@@ -18,6 +18,7 @@ This project is a pure **Next.js full-stack app** (App Router + API routes).
 
 ## UI improvements
 
+- Moved the heavy interactive casino UI into a client-only component (`app/slots-client.jsx`) loaded dynamically from `app/page.jsx` to avoid SSR hydration edge cases that can cause desktop blank screens.
 - Added resilient startup fallback so UI renders even if API init fails/hangs on desktop environments.
 - Added safer spin/withdraw error handling to prevent client crashes from network/API failures.
 - Fixed blank-page risk by removing non-deterministic render values (hydration-safe jackpot counters).
