@@ -13,6 +13,11 @@ const cellW = 100;
 const cellH = 112;
 const gap = 8;
 
+function formatCounter(base, idx) {
+  const value = Math.floor((base * 173 + (idx + 1) * 918273) % 999999999);
+  return value.toLocaleString('en-US');
+}
+
 export default function Page() {
   const [config, setConfig] = useState(null);
   const [player, setPlayer] = useState(null);
@@ -167,7 +172,7 @@ export default function Page() {
 
       <section className="machine">
         <div className="jackpot-strip">
-          {grid[0].map((cell, idx) => <span key={`strip-${idx}`}>{slotIcons[cell]} {Math.floor(Math.random() * 900000000)}</span>)}
+          {grid[0].map((cell, idx) => <span key={`strip-${idx}`}>{slotIcons[cell]} {formatCounter(selectedSlot?.jackpotPool ?? 0, idx)}</span>)}
         </div>
         <div className="reels-wrap">
           <div className="reels">
@@ -203,7 +208,7 @@ export default function Page() {
             ))}
           </ul>
           {win.progressiveWin > 0 && <p>Progressive Hit: ${win.progressiveWin.toFixed(2)}</p>}
-          <p><small>Fairness · seed hash: {win.fairness.serverSeedHash.slice(0, 18)}... · nonce: {win.fairness.nonce}</small></p>
+          <p><small>Fairness · seed hash: {win.fairness?.serverSeedHash?.slice(0, 18) || 'n/a'}... · nonce: {win.fairness?.nonce ?? 'n/a'}</small></p>
         </div>
       )}
 

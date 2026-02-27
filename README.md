@@ -17,6 +17,7 @@ This project is a pure **Next.js full-stack app** (App Router + API routes).
 
 ## UI improvements
 
+- Fixed blank-page risk by removing non-deterministic render values (hydration-safe jackpot counters).
 - Mobile-first responsive layout for controls, reels, jackpot strip, and slot cards.
 - Improved neon casino aesthetics with better spacing, typography scaling, and glow effects.
 - Winning payline overlays and line-by-line payout breakdown remain visible on small screens.
