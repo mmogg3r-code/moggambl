@@ -195,7 +195,8 @@ export default function Page() {
       {win?.totalWin > 0 && (
         <div className="win-popup">
           <h3>🎉 Big Win!</h3>
-          <p>Total: ${win.totalWin.toFixed(2)} | Base Win: ${win.payoutUSD.toFixed(2)}</p>
+          <p className="celebrate">🎊 You won <b>${win.totalWin.toFixed(2)}</b>!</p>
+          <p>Total Bet: <b>${win.totalBet.toFixed(2)}</b> | Base Win: <b>${win.payoutUSD.toFixed(2)}</b></p>
           <ul>
             {win.winningLines.slice(0, 6).map((line) => (
               <li key={`line-${line.lineIndex}`}>Line {line.lineIndex + 1}: {line.symbol} x{line.count} = ${line.amount.toFixed(2)}</li>
@@ -204,6 +205,13 @@ export default function Page() {
           {win.progressiveWin > 0 && <p>Progressive Hit: ${win.progressiveWin.toFixed(2)}</p>}
           <p><small>Fairness · seed hash: {win.fairness.serverSeedHash.slice(0, 18)}... · nonce: {win.fairness.nonce}</small></p>
         </div>
+      )}
+
+      {win && (
+        <section className="last-spin-summary">
+          <div>Last Total Bet: <b>${win.totalBet.toFixed(2)}</b></div>
+          <div>Last Win: <b>${win.totalWin.toFixed(2)}</b></div>
+        </section>
       )}
 
       <p className="message">{message}</p>
