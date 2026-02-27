@@ -1,9 +1,4 @@
-import dynamic from 'next/dynamic';
-
-const RouletteClient = dynamic(() => import('./slots-client.jsx'), {
-  ssr: false,
-  loading: () => <main className="loading">Loading roulette lounge...</main>
-});
+import RouletteClient from './slots-client.jsx';
 
 export default function Page() {
   return <RouletteClient />;

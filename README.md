@@ -43,3 +43,9 @@ npm start
 
 This is a Node/Next.js app. Deploy with your host's **Next.js** runtime using `npm run build` then `npm start`.
 Do not configure a static-only output directory for this deployment mode.
+
+
+## Rendering reliability
+
+- The root page now directly renders the client roulette component (no dynamic loading fallback), which avoids cases where users get stuck on a loading screen when a dynamic chunk fails to load.
+- The logo is rendered with a standard `<img>` to reduce runtime integration issues on restrictive deployments.

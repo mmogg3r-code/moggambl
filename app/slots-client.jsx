@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 
 const fallbackConfig = {
@@ -268,7 +267,7 @@ export default function RouletteClient() {
   return (
     <main className="app">
       <div className="coin-rain">{Array.from({ length: 12 }).map((_, i) => <span key={i} style={{ '--d': `${(i % 6) * 0.45}s`, '--x': `${(i * 11) % 100}%` }}>🪙</span>)}</div>
-      <Image src="/assets/mogambl-logo.svg" alt="Mogambl logo" width={760} height={180} priority className="logo" />
+      <img src="/assets/mogambl-logo.svg" alt="Mogambl logo" className="logo" />
       <h1>Roulette Royale</h1>
       {initError && <p className="message">Startup warning: {initError}</p>}
 
