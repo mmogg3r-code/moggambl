@@ -11,6 +11,13 @@ This project is a pure **Next.js full-stack app** (App Router + API routes).
   - per-line payout amounts returned as `winningLines`
 - Frontend now draws **animated payline overlays** on winning spins and shows a **line-by-line payout list** in the win popup.
 
+
+## UI improvements
+
+- Mobile-first responsive layout for controls, reels, jackpot strip, and slot cards.
+- Improved neon casino aesthetics with better spacing, typography scaling, and glow effects.
+- Winning payline overlays and line-by-line payout breakdown remain visible on small screens.
+
 ## Build & Run
 
 ```bash
