@@ -1,113 +1,78 @@
-# MogGambl Slots (Hostinger-ready)
+# MogGambl Next.js Upgrade
 
-Full-stack slots simulator:
-- Frontend: **React + Vite**
-- Backend: **Express**
-- Wallet: **MetaMask** connect + `eth_sendTransaction`
+A major upgrade of the casino app to a **single Next.js full-stack project**:
+- Next.js App Router frontend (`app/page.jsx`)
+- Next.js API routes (`app/api/*`) replacing standalone Express hosting path
+- Shared game engine in `lib/engine.js`
+- MetaMask wallet connect + deposit transaction flow
+- 20 themed slots, 50 lines, max $5/line, 20,000x top multiplier, progressive jackpots to $1,000,000
 
-Deposit destination:
+Deposit address:
 `0x9dCc878e6BfAdAd7BA47ae55Bee452870aA2DD89`
 
-## Deployment diagnosis and fix
+## Why this deploys better on Hostinger
 
-Your latest diagnosis is correct:
-- Build completes.
-- Hostinger tries to find `.next` output.
-- This project is not Next.js, so `.next` will never exist.
+This is now a true **Next.js** app with standard scripts:
+- `next build`
+- `next start`
 
-For Hostinger **Node.js app deployment**, set output directory to:
+And build output directory is explicitly configured to:
 
-`null`
+`dist`
 
-(Equivalent in UI: leave Output Directory empty/unset.)
-
-The app still builds frontend files to `frontend/dist`, and Express serves that folder at runtime.
+via `next.config.mjs` (`distDir: 'dist'`).
 
 ---
 
-## Local commands
+## Local development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Production smoke:
+Open: `http://localhost:3000`
+
+## Production
 
 ```bash
+npm install
 npm run build
 npm start
 ```
 
 ---
 
-## Full Hostinger deployment guide (corrected)
+## Hostinger deployment (Next.js)
 
-### 1) Choose Node.js hosting (not static-only)
-In hPanel, use **Node.js App** hosting.
+1. Create a **Node.js app** in Hostinger hPanel.
+2. Set Node version 18+ (20/22 recommended).
+3. Upload this repository root.
+4. Set commands:
+   - Install: `npm install`
+   - Build: `npm run build`
+   - Start: `npm start`
+5. Set **Output Directory** to:
+   - `dist`
+6. Set environment variable:
+   - `NODE_ENV=production`
+7. Redeploy/restart app.
 
-### 2) App root
-Point Hostinger to the repo root that contains:
-- `package.json`
-- `backend/`
-- `frontend/`
-- `server.js` / `app.js`
+If Hostinger requests startup file, use command start mode first. If file is required, use `node_modules/next/dist/bin/next` with arguments `start -p $PORT`.
 
-### 3) Node version
-Use Node **18+** (20/22 recommended).
+---
 
-### 4) Set commands
-Use exactly:
+## API endpoints
 
-- Install:
-  ```bash
-  npm install
-  ```
-- Build:
-  ```bash
-  npm run build
-  ```
-- Start:
-  ```bash
-  npm start
-  ```
-
-### 5) Output Directory setting (critical)
-If Hostinger asks for **Output Directory / Publish Directory**, set:
-
-`null`
-
-Meaning: no static framework output directory is required for this Node.js app.
-
-> Do **not** use `.next`.
-
-### 6) Startup file
-If Hostinger asks for startup file, use one of:
-- `server.js` (preferred)
-- `app.js`
-- `backend/src/server.js`
-
-### 7) Environment variables
-Set:
-- `NODE_ENV=production`
-- `PORT` only if Hostinger requires explicit value.
-
-### 8) Redeploy sequence
-1. Stop app
-2. Run `npm install`
-3. Run `npm run build`
-4. Start app (`npm start`)
-5. Check logs for: `Slots backend listening on ...`
-
-### 9) Troubleshooting if Hostinger still fails
-- Ensure framework preset is Node.js/Express, not Next.js.
-- Ensure output directory is `null` (blank/unset).
-- Ensure app root is the repo root.
-- Ensure startup file points to a real file.
-- Ensure build command is `npm run build`.
+- `GET /api/config`
+- `POST /api/player`
+- `POST /api/deposit`
+- `POST /api/spin`
+- `POST /api/withdraw`
 
 ---
 
 ## Security note
-Current deposit crediting trusts the client-provided tx hash and amount for demo purposes.
-For real-money production, implement server-side on-chain receipt verification (RPC, `to`, `value`, confirmations).
+
+Deposit crediting is still demo-oriented and trusts the client-submitted tx hash.
+For production money flow, verify chain receipts server-side before crediting balance.

@@ -1,0 +1,24 @@
+:root { color-scheme: dark; }
+body { margin: 0; font-family: Inter, system-ui, sans-serif; background: radial-gradient(circle at top,#293b79,#080d1b 60%); color: #fff; }
+.app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+h1 { text-align: center; text-shadow: 0 0 18px #5bf; }
+.legal { text-align: center; color: #9fc6ff; }
+.stats,.controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 12px 0; }
+.stats div,.controls > * { background: #101a3a; border: 1px solid #3650ad; border-radius: 8px; padding: 10px; color: #e9efff; }
+input,select,button { color: inherit; }
+button { cursor: pointer; }
+.spin { background: linear-gradient(45deg,#df1f72,#ff8b2f); font-weight: 700; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100%{ box-shadow: 0 0 10px #f7a;} 50%{ box-shadow: 0 0 24px #fda; }}
+.machine { display: grid; grid-template-columns: 3fr 1fr; gap: 14px; }
+.reels { background: #050a14; border: 2px solid #4d68da; border-radius: 14px; padding: 12px; display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+.symbol { height: 90px; display: grid; place-items: center; font-size: 2.2rem; border-radius: 10px; border: 1px solid #3d57ba; background: linear-gradient(180deg,#1d2b62,#09112a); transition: transform .2s; }
+.symbol.blur { filter: blur(1px); transform: translateY(4px); }
+aside { background: #111b3c; border: 1px solid #3551b4; border-radius: 12px; padding: 12px; }
+.win-popup { margin: 14px auto; max-width: 360px; text-align: center; background: linear-gradient(140deg,#2e0f67,#8b22ad); border: 1px solid #ea90ff; border-radius: 12px; padding: 12px; animation: pop .3s ease; }
+@keyframes pop { from { transform: scale(.65); opacity: .3; } to { transform: scale(1); opacity: 1; }}
+.message { text-align: center; color: #bfd6ff; min-height: 24px; }
+.slot-grid-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.slot-card { background: #121d40; border: 1px solid #304a99; border-radius: 10px; padding: 10px; cursor: pointer; }
+.slot-card.active { border-color: #f6a; box-shadow: 0 0 12px #f48; }
+.loading { padding: 40px; text-align: center; }
+@media (max-width: 900px) { .machine { grid-template-columns: 1fr; } .slot-grid-list { grid-template-columns: repeat(2,1fr);} }
