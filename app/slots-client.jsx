@@ -3,35 +3,13 @@
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 
-const slotIcons = {
-  '7': '7️⃣', BAR: '🟥', '🍒': '🍒', '💎': '💎', '👑': '👑',
-  '⚡': '⚡', '🐉': '🐉', '🌙': '🌙', '🔔': '🔔', '⭐': '⭐'
-};
-
-const initialGrid = Array.from({ length: 3 }, () => Array.from({ length: 5 }, () => '⭐'));
-const cellW = 100;
-const cellH = 112;
-const gap = 8;
-
-function formatCounter(base, idx) {
-  const value = Math.floor((base * 173 + (idx + 1) * 918273) % 999999999);
-  return value.toLocaleString('en-US');
-}
-
-
-const fallbackSlots = Array.from({ length: 20 }).map((_, i) => ({
-  id: `slot-${i + 1}`,
-  name: `Slot ${i + 1}`,
-  volatility: 2,
-  jackpotPool: 5000 + (i * 1000)
-}));
-
 const fallbackConfig = {
+  game: 'roulette',
   depositAddress: '0x9dCc878e6BfAdAd7BA47ae55Bee452870aA2DD89',
-  lines: 50,
-  maxBetPerLine: 5,
-  maxMultiplier: 20000,
-  slots: fallbackSlots
+  minBetUSD: 1,
+  maxBetUSD: 500,
+  maxPayoutMultiplier: 35,
+  tables: [{ id: 'table-1', name: 'Neon Royale', rounds: 0 }]
 };
 
 const fallbackPlayer = {
@@ -44,25 +22,39 @@ const fallbackPlayer = {
   lastSpin: null
 };
 
-export default function Page() {
+const defaultBets = {
+  number: '7',
+  color: 'red',
+  evenOdd: 'even',
+  highLow: 'low',
+  dozen: '1',
+  column: '1'
+};
+
+const wheelNumbers = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+
+export default function RouletteClient() {
   const [config, setConfig] = useState(fallbackConfig);
   const [player, setPlayer] = useState(fallbackPlayer);
-  const [slotId, setSlotId] = useState('slot-1');
-  const [lineBet, setLineBet] = useState(1);
-  const [grid, setGrid] = useState(initialGrid);
-  const [message, setMessage] = useState('Welcome to MogGambl NEXT GEN');
-  const [isSpinning, setSpinning] = useState(false);
-  const [win, setWin] = useState(null);
+  const [message, setMessage] = useState('Welcome to MogGambl Roulette');
   const [walletAddress, setWalletAddress] = useState('');
   const [depositEth, setDepositEth] = useState('0.01');
   const [clientSeed, setClientSeed] = useState('player-seed-1');
+  const [tableId, setTableId] = useState('table-1');
+  const [betType, setBetType] = useState('number');
+  const [betValue, setBetValue] = useState(defaultBets.number);
+  const [stake, setStake] = useState(5);
   const [turboSpin, setTurboSpin] = useState(false);
   const [autoSpinOn, setAutoSpinOn] = useState(false);
   const [autoSpinCount, setAutoSpinCount] = useState(10);
   const [autoSpinsLeft, setAutoSpinsLeft] = useState(0);
+  const [isSpinning, setSpinning] = useState(false);
+  const [spinResult, setSpinResult] = useState(null);
+  const [wheelIndex, setWheelIndex] = useState(0);
+  const [recentNumbers, setRecentNumbers] = useState([]);
   const [initError, setInitError] = useState('');
 
-  const selectedSlot = useMemo(() => (config?.slots || []).find((s) => s.id === slotId), [config, slotId]);
+  const selectedTable = useMemo(() => (config.tables || []).find((table) => table.id === tableId), [config.tables, tableId]);
 
   const safeFetchJson = async (url, options, timeoutMs = 5000) => {
     const controller = new AbortController();
@@ -76,31 +68,34 @@ export default function Page() {
     }
   };
 
-  const initGame = async () => {
-    try {
-      setInitError('');
-      const conf = await safeFetchJson('/api/config');
-      setConfig(conf);
-      const saved = typeof window !== 'undefined' ? localStorage.getItem('moggambl-player-id') : null;
-      const playerResp = await safeFetchJson('/api/player', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ playerId: saved || undefined })
-      });
-      if (typeof window !== 'undefined') localStorage.setItem('moggambl-player-id', playerResp.id);
-      if (playerResp.walletAddress) setWalletAddress(playerResp.walletAddress);
-      setPlayer(playerResp);
-    } catch (error) {
-      setInitError(error.message || 'Failed to initialize game');
-      setMessage('API failed to load. Running in offline fallback mode.');
-      setConfig(fallbackConfig);
-      setPlayer((prev) => prev || fallbackPlayer);
-    }
-  };
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const conf = await safeFetchJson('/api/config');
+        setConfig(conf);
+        setTableId(conf.tables?.[0]?.id || 'table-1');
+
+        const saved = localStorage.getItem('moggambl-player-id');
+        const playerResp = await safeFetchJson('/api/player', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ playerId: saved || undefined })
+        });
+        localStorage.setItem('moggambl-player-id', playerResp.id);
+        setPlayer(playerResp);
+        if (playerResp.walletAddress) setWalletAddress(playerResp.walletAddress);
+      } catch (error) {
+        setInitError(error.message || 'Failed to initialize game');
+        setMessage('API failed to load. Running in offline fallback mode.');
+      }
+    };
+
+    init();
+  }, []);
 
   useEffect(() => {
-    initGame();
-  }, []);
+    setBetValue(defaultBets[betType]);
+  }, [betType]);
 
   useEffect(() => {
     if (!autoSpinOn || isSpinning || autoSpinsLeft <= 0) return;
@@ -114,27 +109,14 @@ export default function Page() {
         }
         return next;
       });
-    }, turboSpin ? 80 : 350);
+    }, turboSpin ? 120 : 450);
+
     return () => clearTimeout(timer);
   }, [autoSpinOn, autoSpinsLeft, isSpinning, turboSpin]);
 
-  const pingSound = (hz = 440, duration = 0.1) => {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return;
-    const c = new Ctx();
-    const o = c.createOscillator();
-    const g = c.createGain();
-    o.connect(g);
-    g.connect(c.destination);
-    o.frequency.value = hz;
-    o.type = 'triangle';
-    g.gain.value = 0.03;
-    o.start();
-    o.stop(c.currentTime + duration);
-  };
-
   const connectMetaMask = async () => {
     if (!window.ethereum) return setMessage('MetaMask not detected.');
+
     try {
       const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
       setWalletAddress(address);
@@ -163,31 +145,35 @@ export default function Page() {
       if (updated.error) return setMessage(updated.error);
       setPlayer(updated);
       setMessage(`Deposit confirmed: ${depositEth} ETH`);
-      pingSound(540, 0.2);
     } catch {
       setMessage('Deposit failed or was rejected.');
     }
   };
 
   const spinOnce = async () => {
-    if (!player) return false;
+    if (!player?.id) return false;
     try {
       setSpinning(true);
-      setWin(null);
+      setSpinResult(null);
 
-      const loopCount = turboSpin ? 4 : 10;
-      const loopDelay = turboSpin ? 20 : 75;
-
-      for (let i = 0; i < loopCount; i += 1) {
-        setGrid(Array.from({ length: 3 }, () => Array.from({ length: 5 }, () => Object.keys(slotIcons)[Math.floor(Math.random() * 10)])));
-        pingSound(320 + (i * 30), turboSpin ? 0.03 : 0.05);
-        await new Promise((r) => setTimeout(r, loopDelay));
+      const loops = turboSpin ? 14 : 25;
+      const delay = turboSpin ? 12 : 32;
+      for (let i = 0; i < loops; i += 1) {
+        setWheelIndex((idx) => (idx + 1) % wheelNumbers.length);
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
 
       const resp = await fetch('/api/spin', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ playerId: player.id, slotId, lineBet: Number(lineBet), clientSeed })
+        body: JSON.stringify({
+          playerId: player.id,
+          tableId,
+          stake: Number(stake),
+          betType,
+          betValue,
+          clientSeed
+        })
       }).then((r) => r.json());
 
       if (resp.error) {
@@ -195,12 +181,19 @@ export default function Page() {
         return false;
       }
 
-      setGrid(resp.spin.grid);
+      const number = resp.spin.outcomeNumber;
+      const idx = wheelNumbers.indexOf(number);
+      if (idx >= 0) setWheelIndex(idx);
+
+      setSpinResult(resp.spin);
       setPlayer(resp.player);
-      setConfig((old) => ({ ...old, slots: (old?.slots || []).map((s) => (s.id === slotId ? { ...s, jackpotPool: resp.spin.jackpotPool } : s)) }));
-      setWin(resp.spin);
-      setMessage(resp.spin.totalWin > 0 ? `WIN $${resp.spin.totalWin.toFixed(2)} (${resp.spin.winningLines.length} line hits)` : 'No win this spin');
-      if (resp.spin.totalWin > 0) pingSound(880, 0.3);
+      setRecentNumbers((prev) => [number, ...prev].slice(0, 12));
+
+      if (resp.spin.isWin) {
+        setMessage(`WIN! +$${resp.spin.netWinUSD.toFixed(2)} on ${resp.spin.betType}`);
+      } else {
+        setMessage(`No hit. Ball landed on ${number} ${resp.spin.outcomeColor.toUpperCase()}`);
+      }
       return true;
     } catch (error) {
       setMessage(error?.message || 'Spin failed. Please try again.');
@@ -208,10 +201,6 @@ export default function Page() {
     } finally {
       setSpinning(false);
     }
-  };
-
-  const spin = async () => {
-    await spinOnce();
   };
 
   const startAutoSpin = () => {
@@ -246,99 +235,113 @@ export default function Page() {
     }
   };
 
+  const renderBetValueInput = () => {
+    if (betType === 'number') {
+      return (
+        <input
+          type="number"
+          min="0"
+          max="36"
+          value={betValue}
+          onChange={(e) => setBetValue(e.target.value)}
+        />
+      );
+    }
+
+    const options = {
+      color: ['red', 'black'],
+      evenOdd: ['even', 'odd'],
+      highLow: ['low', 'high'],
+      dozen: ['1', '2', '3'],
+      column: ['1', '2', '3']
+    }[betType];
+
+    return (
+      <select value={betValue} onChange={(e) => setBetValue(e.target.value)}>
+        {options.map((option) => (
+          <option key={option} value={option}>{option}</option>
+        ))}
+      </select>
+    );
+  };
+
   return (
     <main className="app">
-      <div className="coins coins-left">💰 💰 💰</div>
-      <div className="coins coins-right">💰 💰 💰</div>
-      <div className="coin-rain">{Array.from({ length: 10 }).map((_, i) => <span key={i} style={{ '--d': `${(i % 5) * 0.5}s`, '--x': `${(i * 19) % 100}%` }}>🪙</span>)}</div>
-
+      <div className="coin-rain">{Array.from({ length: 12 }).map((_, i) => <span key={i} style={{ '--d': `${(i % 6) * 0.45}s`, '--x': `${(i * 11) % 100}%` }}>🪙</span>)}</div>
       <Image src="/assets/mogambl-logo.svg" alt="Mogambl logo" width={760} height={180} priority className="logo" />
-
+      <h1>Roulette Royale</h1>
       {initError && <p className="message">Startup warning: {initError}</p>}
 
       <section className="stats">
         <div><strong>Balance:</strong> ${player.balanceUSD.toFixed(2)}</div>
         <div><strong>Wagered:</strong> ${player.totalWageredUSD.toFixed(2)}</div>
-        <div><strong>Requirement:</strong> ${(player.totalDepositedUSD * 20).toFixed(2)}</div>
+        <div><strong>Table:</strong> {selectedTable?.name || 'N/A'}</div>
+        <div><strong>Recent:</strong> {recentNumbers.join(', ') || '-'}</div>
       </section>
 
       <section className="controls">
-        <select value={slotId} onChange={(e) => setSlotId(e.target.value)}>
-          {(config.slots || []).map((slot) => <option key={slot.id} value={slot.id}>{slot.name}</option>)}
+        <select value={tableId} onChange={(e) => setTableId(e.target.value)}>
+          {(config.tables || []).map((table) => <option value={table.id} key={table.id}>{table.name}</option>)}
         </select>
-        <input type="number" min="0.01" max={config.maxBetPerLine} step="0.1" value={lineBet} onChange={(e) => setLineBet(e.target.value)} />
-        <button onClick={connectMetaMask}>{walletAddress ? 'MetaMask Connected' : 'Connect MetaMask'}</button>
-        <input type="number" min="0.001" step="0.001" value={depositEth} onChange={(e) => setDepositEth(e.target.value)} />
-        <button onClick={depositWithMetaMask}>Deposit ETH</button>
-        <input type="text" value={clientSeed} onChange={(e) => setClientSeed(e.target.value)} placeholder="Client seed" />
-        <button className="spin" onClick={spin} disabled={isSpinning || autoSpinOn}>{isSpinning ? 'SPINNING...' : 'SPIN 50 LINES'}</button>
-        <button className={`turbo ${turboSpin ? 'active' : ''}`} onClick={() => setTurboSpin((v) => !v)}>{turboSpin ? 'TURBO ON' : 'TURBO OFF'}</button>
-        <input type="number" min="1" max="1000" value={autoSpinCount} onChange={(e) => setAutoSpinCount(e.target.value)} placeholder="Auto spins" />
-        <button onClick={startAutoSpin} disabled={autoSpinOn || isSpinning}>START AUTO</button>
-        <button onClick={stopAutoSpin} disabled={!autoSpinOn}>STOP AUTO</button>
-        <button onClick={withdraw}>Request Withdrawal</button>
+
+        <select value={betType} onChange={(e) => setBetType(e.target.value)}>
+          <option value="number">Straight Number (35:1)</option>
+          <option value="color">Color (1:1)</option>
+          <option value="evenOdd">Even/Odd (1:1)</option>
+          <option value="highLow">High/Low (1:1)</option>
+          <option value="dozen">Dozen (2:1)</option>
+          <option value="column">Column (2:1)</option>
+        </select>
+
+        {renderBetValueInput()}
+
+        <input
+          type="number"
+          min={config.minBetUSD}
+          max={config.maxBetUSD}
+          step="1"
+          value={stake}
+          onChange={(e) => setStake(e.target.value)}
+          placeholder="Stake (USD)"
+        />
+
+        <input value={clientSeed} onChange={(e) => setClientSeed(e.target.value)} placeholder="Client seed" />
+
+        <button className="spin" disabled={isSpinning} onClick={spinOnce}>{isSpinning ? 'Spinning…' : 'Spin'}</button>
+        <button className={turboSpin ? 'turbo active' : 'turbo'} onClick={() => setTurboSpin((v) => !v)}>Turbo {turboSpin ? 'ON' : 'OFF'}</button>
+
+        <input type="number" min="1" value={autoSpinCount} onChange={(e) => setAutoSpinCount(e.target.value)} placeholder="Auto count" />
+        <button onClick={startAutoSpin} disabled={isSpinning || autoSpinOn}>Auto Spin</button>
+        <button onClick={stopAutoSpin} disabled={!autoSpinOn}>Stop Auto</button>
+
+        <button onClick={connectMetaMask}>Connect Wallet</button>
+        <input value={depositEth} onChange={(e) => setDepositEth(e.target.value)} placeholder="Deposit ETH" />
+        <button onClick={depositWithMetaMask}>Deposit</button>
+        <button onClick={withdraw}>Withdraw</button>
       </section>
 
-      {autoSpinOn && <p className="message">Auto spinning... {autoSpinsLeft} left</p>}
-
-      <section className="machine">
-        <div className="jackpot-strip">
-          {grid[0].map((cell, idx) => <span key={`strip-${idx}`}>{slotIcons[cell]} {formatCounter(selectedSlot?.jackpotPool ?? 0, idx)}</span>)}
+      <section className="roulette-stage">
+        <div className="wheel-track" style={{ transform: `translateX(-${wheelIndex * 52}px)` }}>
+          {[...wheelNumbers, ...wheelNumbers].map((num, idx) => {
+            const color = num === 0 ? 'green' : [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36].includes(num) ? 'red' : 'black';
+            return <span key={`${num}-${idx}`} className={`wheel-cell ${color}`}>{num}</span>;
+          })}
         </div>
-        <div className="reels-wrap">
-          <div className="reels">
-            {grid.map((row, ri) => row.map((cell, ci) => <div key={`${ri}-${ci}`} className={`symbol ${isSpinning ? 'blur' : ''}`}>{slotIcons[cell]}</div>))}
-          </div>
-          {!!win?.winningLines?.length && (
-            <svg className="line-overlay" width={532} height={352} viewBox="0 0 532 352">
-              {win.winningLines.slice(0, 8).map((line, i) => {
-                const pts = line.positions.map((p) => `${p.col * (cellW + gap) + (cellW / 2)},${p.row * (cellH + gap) + (cellH / 2)}`).join(' ');
-                return <polyline key={line.lineIndex} points={pts} className="payline" style={{ animationDelay: `${i * 0.08}s` }} />;
-              })}
-            </svg>
-          )}
-        </div>
+        <div className="wheel-pointer">▼</div>
       </section>
 
-      <aside className="cabinet-info">
-        <p><b>Slot:</b> {selectedSlot?.name}</p>
-        <p><b>Volatility:</b> {selectedSlot?.volatility}x</p>
-        <p><b>Progressive:</b> ${(selectedSlot?.jackpotPool ?? 0).toFixed(2)}</p>
-        <p><b>Top Multiplier:</b> {config.maxMultiplier}x</p>
-        <p><b>Deposit Address:</b> <code>{config.depositAddress}</code></p>
-      </aside>
-
-      {win?.totalWin > 0 && (
-        <div className="win-popup">
-          <h3>🎉 Big Win!</h3>
-          <p className="celebrate">🎊 You won <b>${win.totalWin.toFixed(2)}</b>!</p>
-          <p>Total Bet: <b>${win.totalBet.toFixed(2)}</b> | Base Win: <b>${win.payoutUSD.toFixed(2)}</b></p>
-          <ul>
-            {win.winningLines.slice(0, 6).map((line) => (
-              <li key={`line-${line.lineIndex}`}>Line {line.lineIndex + 1}: {line.symbol} x{line.count} = ${line.amount.toFixed(2)}</li>
-            ))}
-          </ul>
-          {win.progressiveWin > 0 && <p>Progressive Hit: ${win.progressiveWin.toFixed(2)}</p>}
-          <p><small>Fairness · seed hash: {win.fairness?.serverSeedHash?.slice(0, 18) || 'n/a'}... · nonce: {win.fairness?.nonce ?? 'n/a'}</small></p>
-        </div>
-      )}
-
-      {win && (
-        <section className="last-spin-summary">
-          <div>Last Total Bet: <b>${win.totalBet.toFixed(2)}</b></div>
-          <div>Last Win: <b>${win.totalWin.toFixed(2)}</b></div>
+      {spinResult && (
+        <section className="win-popup">
+          <h2>{spinResult.isWin ? '🎉 You Win!' : 'Better luck next spin'}</h2>
+          <p><strong>Ball:</strong> {spinResult.outcomeNumber} ({spinResult.outcomeColor})</p>
+          <p><strong>Total Bet:</strong> ${spinResult.totalBet.toFixed(2)}</p>
+          <p><strong>Payout:</strong> ${spinResult.totalPayoutUSD.toFixed(2)}</p>
+          <p><strong>Net:</strong> ${spinResult.netWinUSD.toFixed(2)}</p>
+          <p><strong>Fairness Hash:</strong> <code>{spinResult.fairness.serverSeedHash}</code></p>
         </section>
       )}
 
-      <p className="message">{message}</p>
-      <section className="slot-grid-list">
-        {(config.slots || []).map((s) => (
-          <article key={s.id} className={`slot-card ${s.id === slotId ? 'active' : ''}`} onClick={() => setSlotId(s.id)}>
-            <h4>{s.name}</h4>
-            <span>${s.jackpotPool.toFixed(0)}</span>
-          </article>
-        ))}
-      </section>
+      <p className="message">{message}{autoSpinOn ? ` · Auto left: ${autoSpinsLeft}` : ''}</p>
     </main>
   );
 }
