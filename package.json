@@ -1,19 +1,24 @@
 {
   "name": "moggambl",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "node --watch backend/src/server.js",
     "dev:frontend": "vite --config frontend/vite.config.js",
     "build": "vite build --config frontend/vite.config.js",
-    "start": "NODE_ENV=production node backend/src/server.js",
+    "start": "node backend/src/server.js",
     "test": "node --test backend/src/server.test.js && node --test frontend/src/app.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

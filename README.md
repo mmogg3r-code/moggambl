@@ -1,107 +1,109 @@
-# MogGambl Slots (MetaMask + Express + Vite)
+# MogGambl Slots (Hostinger-ready)
 
-This project is a full-stack slots simulator with:
-- **Frontend:** React + Vite
-- **Backend:** Express
-- **Wallet:** MetaMask connect + `eth_sendTransaction` deposit flow
-- **Casino constraints:** 50 lines, max $5/line, 20,000x max multiplier, 20x wagering requirement before withdrawal, progressive jackpots up to $1,000,000.
+Full-stack slots simulator:
+- Frontend: **React + Vite**
+- Backend: **Express**
+- Wallet: **MetaMask** connect + `eth_sendTransaction`
 
-Deposit target wallet:
+Deposit destination:
 `0x9dCc878e6BfAdAd7BA47ae55Bee452870aA2DD89`
+
+## What was fixed for Hostinger deployment
+
+If Hostinger reports **"Unsupported framework or invalid project structure"**, this repo now includes:
+- a single root `package.json` with valid `build` + `start` scripts,
+- root `server.js` and `app.js` entrypoints (for panels that require default entry names),
+- React dependencies in root install scope,
+- production build output to `backend/public`,
+- Express static serving fallback for SPA routes.
 
 ---
 
-## Local development
+## Local commands
 
 ```bash
 npm install
 npm run dev
 ```
 
-- Frontend dev URL: `http://localhost:5173`
-- Backend API URL: `http://localhost:3001/api/*`
-
-## Production start
+Production smoke:
 
 ```bash
-npm install
 npm run build
 npm start
 ```
 
-`npm run build` generates frontend assets into `backend/public`, and Express serves them in production.
+---
+
+## Full Hostinger deployment guide (Git deployment or upload)
+
+### 1) Choose the correct hosting type
+Use **Node.js hosting** (not static website-only hosting). If your plan has no Node.js app manager, use a VPS.
+
+### 2) Project root in Hostinger
+Ensure Hostinger points to the folder containing:
+- `package.json`
+- `backend/`
+- `frontend/`
+- `server.js` and `app.js`
+
+### 3) Set Node version
+Use Node **18, 20, 22, or 24** (20+ recommended).
+
+### 4) Build/install/start settings in hPanel
+Use these exact commands:
+
+- **Install command**
+  ```bash
+  npm install
+  ```
+- **Build command**
+  ```bash
+  npm run build
+  ```
+- **Start command**
+  ```bash
+  npm start
+  ```
+
+If Hostinger asks for startup file instead of command, set one of:
+- `server.js` (preferred)
+- `app.js` (fallback)
+- `backend/src/server.js` (direct)
+
+### 5) Environment variables
+Set:
+- `NODE_ENV=production`
+- `PORT` only if Hostinger requires explicit port (otherwise let platform inject it)
+
+### 6) Redeploy sequence (important)
+After changing settings:
+1. Stop app
+2. Clear previous build artifacts (optional)
+3. Run install
+4. Run build
+5. Start app
+6. Check logs
+
+You should see: `Slots backend listening on ...`
+
+### 7) If it still says unsupported framework
+Usually one of these is wrong:
+- wrong app root directory selected,
+- Node.js app not enabled for the site,
+- install/build/start commands missing,
+- startup file points to non-existent path,
+- deployment done under static hosting mode.
+
+### 8) MetaMask usage after deploy
+1. Open your domain in a browser with MetaMask.
+2. Click **Connect MetaMask**.
+3. Enter deposit amount and click **Deposit with MetaMask**.
+4. Confirm transaction to deposit address in MetaMask.
 
 ---
 
-## Why you got Hostinger error: "Unsupported framework or invalid project structure"
+## Security note
 
-That error usually appears when Hostinger can't detect a single supported app entrypoint. This repo was updated to be Hostinger-friendly by:
-- using one root `package.json` with clear `build` and `start` scripts,
-- building frontend into `backend/public`,
-- serving frontend directly from Express.
-
-So Hostinger sees this as a standard **Express** Node app.
-
----
-
-## Full Hostinger deployment instructions
-
-## Option A — Hostinger Node.js hosting (Express app)
-
-1. **Create Node.js app in hPanel**
-   - Go to **Websites → Manage → Advanced → Node.js**.
-   - Create app with Node `18+` (20/22 recommended).
-
-2. **Upload project files**
-   - Upload the repository contents to your app directory (e.g., `~/domains/yourdomain.com/public_html/moggambl`).
-   - Ensure root contains `package.json`, `backend/`, `frontend/`.
-
-3. **Set startup file / command**
-   - If Hostinger asks startup file: use `backend/src/server.js`.
-   - If Hostinger asks start command: use `npm start`.
-
-4. **Install dependencies**
-   - In Hostinger terminal:
-     ```bash
-     npm install
-     ```
-
-5. **Build frontend assets**
-   - In Hostinger terminal:
-     ```bash
-     npm run build
-     ```
-   - This creates static files inside `backend/public`.
-
-6. **Set environment**
-   - In Node.js app env vars, set:
-     - `NODE_ENV=production`
-     - `PORT` is usually auto-assigned by Hostinger (do not hardcode if their panel handles it).
-
-7. **Start / restart app**
-   - Restart from hPanel Node.js manager.
-   - Check logs for `Slots backend listening on ...`.
-
-8. **Domain routing**
-   - Attach domain/subdomain to this Node app in hPanel.
-   - Visit your domain; Express should serve frontend and API from same origin.
-
-9. **MetaMask usage in production**
-   - Open site in browser with MetaMask installed.
-   - Click **Connect MetaMask**.
-   - Use **Deposit with MetaMask** to send ETH to the configured deposit address.
-
----
-
-## Option B — If using Hostinger static hosting + separate backend
-
-If your plan does **not** support Node.js runtime:
-1. Deploy frontend static files (from `backend/public` after `npm run build`) to static hosting.
-2. Deploy backend separately on VPS/Cloud (Hostinger VPS, Railway, Render, Fly.io, etc.).
-3. Update frontend API base URL from `/api` to your backend URL.
-
----
-
-## Important production note
-
-Current deposit crediting trusts tx hash submitted by client. For real-money operation, add server-side on-chain verification (RPC + receipt validation for `to`, `value`, `confirmations`) before crediting balances.
+Current deposit crediting trusts the client-provided tx hash and amount for demo purposes.
+For real-money production, implement server-side on-chain receipt verification (RPC, `to`, `value`, confirmations).

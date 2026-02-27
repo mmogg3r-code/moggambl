@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const app = express();
 app.use(cors());
@@ -182,7 +183,9 @@ app.post('/api/withdraw', (req, res) => {
   res.json({ ok: true, message: 'Withdrawal request submitted for manual settlement.', player });
 });
 
-const staticDir = resolve(process.cwd(), 'backend', 'public');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(__dirname, '..', '..');
+const staticDir = resolve(repoRoot, 'backend', 'public');
 if (existsSync(staticDir)) {
   app.use(express.static(staticDir));
   app.get('*', (_req, res) => res.sendFile(resolve(staticDir, 'index.html')));
