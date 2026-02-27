@@ -34,9 +34,19 @@ const fallbackConfig = {
   slots: fallbackSlots
 };
 
+const fallbackPlayer = {
+  id: 'offline-player',
+  walletAddress: null,
+  balanceUSD: 0,
+  totalWageredUSD: 0,
+  totalDepositedUSD: 0,
+  txHistory: [],
+  lastSpin: null
+};
+
 export default function Page() {
-  const [config, setConfig] = useState(null);
-  const [player, setPlayer] = useState(null);
+  const [config, setConfig] = useState(fallbackConfig);
+  const [player, setPlayer] = useState(fallbackPlayer);
   const [slotId, setSlotId] = useState('slot-1');
   const [lineBet, setLineBet] = useState(1);
   const [grid, setGrid] = useState(initialGrid);
@@ -54,10 +64,16 @@ export default function Page() {
 
   const selectedSlot = useMemo(() => (config?.slots || []).find((s) => s.id === slotId), [config, slotId]);
 
-  const safeFetchJson = async (url, options) => {
-    const res = await fetch(url, options);
-    if (!res.ok) throw new Error(`${url} failed (${res.status})`);
-    return res.json();
+  const safeFetchJson = async (url, options, timeoutMs = 5000) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...(options || {}), signal: controller.signal });
+      if (!res.ok) throw new Error(`${url} failed (${res.status})`);
+      return res.json();
+    } finally {
+      clearTimeout(timer);
+    }
   };
 
   const initGame = async () => {
@@ -65,22 +81,20 @@ export default function Page() {
       setInitError('');
       const conf = await safeFetchJson('/api/config');
       setConfig(conf);
-      const saved = localStorage.getItem('moggambl-player-id');
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('moggambl-player-id') : null;
       const playerResp = await safeFetchJson('/api/player', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ playerId: saved || undefined })
       });
-      localStorage.setItem('moggambl-player-id', playerResp.id);
+      if (typeof window !== 'undefined') localStorage.setItem('moggambl-player-id', playerResp.id);
       if (playerResp.walletAddress) setWalletAddress(playerResp.walletAddress);
       setPlayer(playerResp);
     } catch (error) {
       setInitError(error.message || 'Failed to initialize game');
       setMessage('API failed to load. Running in offline fallback mode.');
       setConfig(fallbackConfig);
-      setPlayer((prev) => prev || {
-        id: 'offline-player', walletAddress: null, balanceUSD: 0, totalWageredUSD: 0, totalDepositedUSD: 0, txHistory: [], lastSpin: null
-      });
+      setPlayer((prev) => prev || fallbackPlayer);
     }
   };
 
@@ -222,8 +236,6 @@ export default function Page() {
     setMessage(resp.error || resp.message);
     if (resp.player) setPlayer(resp.player);
   };
-
-  if (!config || !player) return <main className="loading">Loading upgraded casino... {initError ? `(${initError})` : ''}</main>;
 
   return (
     <main className="app">
