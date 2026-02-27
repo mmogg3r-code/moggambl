@@ -1,0 +1,23 @@
+:root { font-family: Inter, system-ui, sans-serif; color: #fff; background: #0c1020; }
+body { margin: 0; background: radial-gradient(circle at top, #28366f, #090d1a 52%); }
+.app { padding: 20px; max-width: 1200px; margin: auto; }
+h1 { text-align: center; letter-spacing: 1px; text-shadow: 0 0 16px #5af; }
+.legal { text-align: center; color: #9cc3ff; }
+.dashboard, .controls { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
+.dashboard div, .controls > * { background: #111a36; padding: 10px; border-radius: 8px; border: 1px solid #2c438f; }
+input, select, button { background: #0f1b3f; color: white; border: 1px solid #3652b0; border-radius: 6px; padding: 8px; }
+button.spin { background: linear-gradient(45deg, #db1d6f, #ff7e25); font-weight: 700; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 8px #f6a; } 50% { box-shadow: 0 0 18px #fd9; } }
+.slot-cabinet { display: grid; grid-template-columns: 3fr 1fr; gap: 16px; align-items: start; }
+.reels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; background: #050810; padding: 12px; border-radius: 14px; border: 2px solid #4f6ee6; }
+.symbol { height: 92px; display: grid; place-items: center; font-size: 2.2rem; background: linear-gradient(180deg,#1f2b5d,#0a1228); border-radius: 10px; border: 1px solid #3f58bf; transition: transform .2s; }
+.symbol.blur { filter: blur(1px); transform: translateY(4px); }
+aside { background: #121b3d; border: 1px solid #3752b3; border-radius: 12px; padding: 12px; }
+.win-popup { margin: 14px auto; max-width: 320px; text-align: center; background: linear-gradient(135deg,#2c0f66,#7a1f98); border: 1px solid #eb84ff; border-radius: 12px; padding: 12px; animation: pop .4s ease; }
+@keyframes pop { from { transform: scale(.5); opacity: .2; } to { transform: scale(1); opacity: 1; } }
+.message { text-align: center; color: #b8cfff; min-height: 24px; }
+.slot-grid-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px; }
+.slot-card { background: #121b36; border: 1px solid #2d468e; border-radius: 10px; padding: 10px; cursor: pointer; }
+.slot-card.active { border-color: #f89; box-shadow: 0 0 10px #f46; }
+.loading { color: #fff; padding: 40px; text-align: center; }
+@media (max-width: 900px){ .slot-cabinet { grid-template-columns: 1fr; } .slot-grid-list { grid-template-columns: repeat(2, 1fr);} }
