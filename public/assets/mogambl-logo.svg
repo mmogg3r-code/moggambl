@@ -1,0 +1,24 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='760' height='180' viewBox='0 0 760 180'>
+  <defs>
+    <linearGradient id='bg' x1='0' x2='1' y1='0' y2='1'>
+      <stop offset='0%' stop-color='#250042'/>
+      <stop offset='100%' stop-color='#590f7a'/>
+    </linearGradient>
+    <linearGradient id='gold' x1='0' x2='0' y1='0' y2='1'>
+      <stop offset='0%' stop-color='#fff2a8'/>
+      <stop offset='45%' stop-color='#ffcb38'/>
+      <stop offset='100%' stop-color='#ff8a00'/>
+    </linearGradient>
+    <filter id='glow' x='-50%' y='-50%' width='200%' height='200%'>
+      <feGaussianBlur stdDeviation='4' result='b'/>
+      <feMerge><feMergeNode in='b'/><feMergeNode in='SourceGraphic'/></feMerge>
+    </filter>
+  </defs>
+  <rect x='4' y='4' width='752' height='172' rx='24' fill='url(#bg)' stroke='#ffd84d' stroke-width='8'/>
+  <g filter='url(#glow)'>
+    <text x='380' y='105' text-anchor='middle' font-size='88' font-weight='900' font-family='Impact,Arial Black,sans-serif' fill='url(#gold)' stroke='#341000' stroke-width='3'>MOGAMBL</text>
+    <text x='380' y='145' text-anchor='middle' font-size='28' font-weight='700' font-family='Trebuchet MS,Arial,sans-serif' fill='#ffe27c'>TRUE CASINO EXPERIENCE</text>
+  </g>
+  <text x='34' y='52' font-size='34'>🎰</text>
+  <text x='690' y='52' font-size='34'>💰</text>
+</svg>
