@@ -13,6 +13,7 @@ MogGambl is now a **roulette game** built as a Next.js full-stack app (App Route
   - Dozens (2:1)
   - Columns (2:1)
 - Turbo Spin and Auto Spin.
+- Enhanced UX layout with glassmorphism cards, quick-stake chips, live recent-number pills, and celebration states.
 - MetaMask wallet connect + demo ETH deposit flow.
 - API routes for player/session state and bankroll actions.
 
@@ -49,3 +50,9 @@ Do not configure a static-only output directory for this deployment mode.
 
 - The root page now directly renders the client roulette component (no dynamic loading fallback), which avoids cases where users get stuck on a loading screen when a dynamic chunk fails to load.
 - The logo is rendered with a standard `<img>` to reduce runtime integration issues on restrictive deployments.
+
+
+## Animation approach
+
+- Uses performant browser-native animation tools (CSS keyframes + transform transitions) for coin rain, wheel movement and win pulses.
+- UI interactions use micro-animations (hover lift, state glow, button feedback) to make gameplay feel lively without extra runtime dependencies.
